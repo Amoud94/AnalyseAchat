@@ -1,0 +1,73 @@
+services:
+
+  backend:
+    build:
+      context: .
+    container_name: backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_NAME=worldofnumeric
+      - MONGO_URI=mongodb://database:27017
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - seed
+      - database
+      - redis
+    networks:
+      - app-network
+
+  # frontend:
+  #   build:
+  #     context: ./vue-front
+  #     args:
+  #       - VITE_API_ENDPOINT=http://localhost:3000/api
+  #   container_name: frontend
+  #   environment:
+  #     - VITE_API_ENDPOINT=http://localhost:3000/api
+  #   ports:
+  #     - "4173:4173"
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - app-network
+
+  seed:
+    build:
+      context: .
+    container_name: seed
+    entrypoint: ["npm", "run", "seed"]
+    environment:
+      - NODE_ENV=production
+      - DB_NAME=worldofnumeric
+      - MONGO_URI=mongodb://database:27017
+    depends_on:
+      - database
+    networks:
+      - app-network
+
+  database:
+    image: mongo:6.0
+    container_name: database
+    volumes:
+      - db_data:/data/db
+    ports:
+      - "27017:27017"
+    restart: always
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7.0
+    container_name: redis
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: always
+    networks:
+      - app-network
+
+networks:
+  app-network:
+volumes:
+  db_data:
